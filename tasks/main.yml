@@ -83,6 +83,22 @@
   when: posthog_env_file.stat.exists
   notify: Restart PostHog stack
 
+- name: Ensure service secrets in existing .env
+  ansible.builtin.lineinfile:
+    path: "{{ posthog_install_dir }}/.env"
+    regexp: '^{{ item.key }}='
+    line: '{{ item.key }}={{ item.value }}'
+    mode: '0600'
+  loop: >-
+    {{ {'INTERNAL_REQUEST_TOKEN': posthog_internal_request_token,
+        'RECORDING_API_JWT_SECRET': posthog_recording_api_jwt_secret}
+       | dict2items | selectattr('value') | list }}
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true
+  when: posthog_env_file.stat.exists
+  notify: Restart PostHog stack
+
 - name: Ensure share directory exists
   ansible.builtin.file:
     path: "{{ posthog_install_dir }}/share"

@@ -14,6 +14,8 @@ posthog_secret: ""
 posthog_encryption_salt_keys: ""
 posthog_browserless_secret: ""
 posthog_internal_api_secret: ""
+posthog_internal_request_token: ""
+posthog_recording_api_jwt_secret: ""
 
 posthog_anthropic_api_key: ""
 posthog_openai_api_key: ""
