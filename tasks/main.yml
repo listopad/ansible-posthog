@@ -62,9 +62,10 @@
   ansible.builtin.lineinfile:
     path: "{{ posthog_install_dir }}/.env"
     regexp: '^CADDY_TLS_BLOCK='
-    line: 'CADDY_TLS_BLOCK='
+    line: 'CADDY_TLS_BLOCK={{ posthog_caddy_tls_block }}'
     mode: '0600'
   when: posthog_env_file.stat.exists
+  notify: Restart PostHog stack
 
 - name: Ensure settings in existing .env
   ansible.builtin.lineinfile:

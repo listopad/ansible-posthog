@@ -31,6 +31,12 @@ posthog_use_staging_tls: false
 # Caddy site block Host. За ALB/Traefik нужен catch-all, иначе пустой 200.
 posthog_caddy_host: "http://:8000"
 
+# Значение CADDY_TLS_BLOCK в .env как есть, с кавычками — попадает в глобальный
+# блок Caddyfile. За traefik нужен trusted_proxies, иначе Caddy затирает
+# X-Forwarded-For адресом traefik и у событий нет гео:
+# '"servers {\n    trusted_proxies static private_ranges\n}"'
+posthog_caddy_tls_block: ""
+
 posthog_http_port: 80
 posthog_https_port: 443
 
