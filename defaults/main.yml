@@ -45,3 +45,8 @@ posthog_https_port: 443
 posthog_env_extra: {}
 
 posthog_compose_override: {}
+
+# restart для сервисов, у которых в docker-compose.yml/base стоит on-failure.
+# Пусто — оставить как в upstream. always — контейнеры поднимаются после рестарта dockerd,
+# даже если он погасил их сам (live-restore выключен) или они вышли с кодом 0.
+posthog_restart_policy: ""

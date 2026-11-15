@@ -176,18 +176,53 @@
     mode: '0644'
   notify: Restart PostHog stack
 
+- name: Read docker-compose.base.yml
+  ansible.builtin.slurp:
+    src: "{{ posthog_install_dir }}/docker-compose.base.yml"
+  register: posthog_base_compose
+  when: posthog_restart_policy | length > 0
+
+- name: Parse compose services for restart policy
+  ansible.builtin.set_fact:
+    posthog_hobby_services: "{{ (posthog_hobby_compose.content | b64decode | from_yaml).services }}"
+    posthog_base_services: "{{ (posthog_base_compose.content | b64decode | from_yaml).services }}"
+    posthog_restart_override: {}
+  when: posthog_restart_policy | length > 0
+
+# restart: on-failure задан в docker-compose.yml или унаследован через extends из
+# docker-compose.base.yml. Сервисы с restart: 'no' (init, миграции) не трогаем.
+- name: Override restart policy of services with on-failure
+  ansible.builtin.set_fact:
+    posthog_restart_override: "{{ posthog_restart_override | combine({item.key: {'restart': posthog_restart_policy}}) }}"
+  loop: "{{ posthog_hobby_services | default({}) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when:
+    - posthog_restart_policy | length > 0
+    - >-
+      (item.value.restart | default(
+        (posthog_base_services[item.value.extends.service] | default({})).restart | default('')
+        if item.value.extends.file | default('') == 'docker-compose.base.yml' else ''
+      )) == 'on-failure'
+
+- name: Merge docker-compose.override.yml content
+  ansible.builtin.set_fact:
+    posthog_compose_override_effective: >-
+      {{ ({'services': posthog_restart_override} if posthog_restart_override | default({}) | length > 0 else {})
+         | combine(posthog_compose_override, recursive=True) }}
+
 - name: Write docker-compose.override.yml
   ansible.builtin.copy:
     dest: "{{ posthog_install_dir }}/docker-compose.override.yml"
-    content: "{{ posthog_compose_override | to_nice_yaml(indent=2, width=1000) }}"
+    content: "{{ posthog_compose_override_effective | to_nice_yaml(indent=2, width=1000) }}"
     mode: '0644'
-  when: posthog_compose_override | length > 0
+  when: posthog_compose_override_effective | length > 0
 
 - name: Remove docker-compose.override.yml
   ansible.builtin.file:
     path: "{{ posthog_install_dir }}/docker-compose.override.yml"
     state: absent
-  when: posthog_compose_override | length == 0
+  when: posthog_compose_override_effective | length == 0
 
 - name: Start PostHog stack
   community.docker.docker_compose_v2:

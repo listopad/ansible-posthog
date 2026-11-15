@@ -14,6 +14,7 @@ Ansible-роль для self-hosted PostHog (hobby compose) на UnitPay.
 | `posthog_git_sha` | `master` | Checkout compose-файлов; тег образа задаётся отдельно через `posthog_app_tag` |
 | Существующий `.env` | Не перезаписывается | Секреты сохраняются; `CADDY_HOST`, TLS-блоки, `POSTHOG_APP_TAG`, `DOMAIN`, `REGISTRY_URL` и `posthog_env_extra` выставляются через `lineinfile` |
 | `posthog_compose_override` | `{}` | Содержимое `docker-compose.override.yml`; пустой словарь удаляет файл |
+| `posthog_restart_policy` | `""` | `restart` для сервисов с `on-failure` (своим или из `docker-compose.base.yml`), пишется в `docker-compose.override.yml` под `posthog_compose_override`; пусто — как в upstream |
 
 ### Чего не делать на уже мигрированном инстансе
 
